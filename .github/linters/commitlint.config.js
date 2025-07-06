@@ -23,4 +23,7 @@ module.exports = {
     skipWords: ['commitlint'], // We add words we would like to ignore here
     suggestions: true,
   },
+  ignores: [
+    (msg) => /Signed-off-by: dependabot\[bot]/m.test(msg),
+  ],
 };

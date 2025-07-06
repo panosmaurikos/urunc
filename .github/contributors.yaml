@@ -20,3 +20,6 @@ users:
   copilot-pull-request-reviewerbot:
     name: copilot[bot]
     email: copilot[bot]@users.noreply.github.com
+  dependabotbot:
+    name: dependabot[bot]
+    email: support@github.com
