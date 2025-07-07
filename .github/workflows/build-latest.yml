@@ -128,7 +128,7 @@ jobs:
 
   manifest:
     needs: [build-all]
-    runs-on: base-dind-2204-amd64
+    runs-on: ubuntu-22.04
     permissions:
       contents: write # for uploading the SBOM to the release
       packages: write # for uploading the finished container

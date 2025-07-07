@@ -54,22 +54,14 @@ jobs:
       run: |
         make
 
-    - name: Upload urunc_${{ matrix.arch }} to S3
-      uses: cloudkernels/minio-upload@v3
+    - name: Upload urunc_${{ matrix.arch }}
+      uses: actions/upload-artifact@v4
       with:
-        url: https://s3.nbfc.io
-        access-key: ${{ secrets.AWS_ACCESS_KEY }}
-        secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        local-path: dist/urunc_static_${{ matrix.arch }}
-        remote-path: nbfc-assets/github/urunc/dist/${{ steps.set-ref.outputs.ref }}/${{ matrix.arch }}/
-        policy: 1
-
-    - name: Upload containerd-shim-urunc-v2_${{ matrix.arch }} to S3
-      uses: cloudkernels/minio-upload@v3
+        name: urunc_${{ matrix.arch }}-${{ github.run_id }}
+        path: dist/urunc_static_${{ matrix.arch }}
+    
+    - name: Upload containerd-shim-urunc-v2 artifact
+      uses: actions/upload-artifact@v4
       with:
-        url: https://s3.nbfc.io
-        access-key: ${{ secrets.AWS_ACCESS_KEY }}
-        secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        local-path: dist/containerd-shim-urunc-v2_static_${{ matrix.arch }}
-        remote-path: nbfc-assets/github/urunc/dist/${{ steps.set-ref.outputs.ref }}/${{ matrix.arch }}/
-        policy: 1
+        name: containerd-shim-urunc-v2_${{ matrix.arch }}-${{ github.run_id }}
+        path: dist/containerd-shim-urunc-v2_static_${{ matrix.arch }}

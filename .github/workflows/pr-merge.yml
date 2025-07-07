@@ -1,0 +1,54 @@
+name: Final merge to main
+
+on:
+  pull_request_target:
+    types:
+      - closed
+
+jobs:
+  add-trailers-and-merge:
+    if: |
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.base.ref, 'main-pr')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Set up Git
+        run: |
+          git config --global user.name "urunc-bot[bot]"
+          git config --global user.email "urunc-bot[bot]@users.noreply.github.com"
+
+      - name: Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.base.ref }}
+
+      - name: Generate urunc-bot token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.URUNC_BOT_APP_ID }}
+          private-key: ${{ secrets.URUNC_BOT_PRIVATE_KEY }}
+
+      - name: Append git trailers
+        uses: nubificus/git-trailers@feat_auto_merge
+        with:
+          user_info: .github/contributors.yaml
+
+      - name: Create a Pull Request from PR_BRANCH to main and merge it
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          PR_BRANCH=${{ github.event.pull_request.base.ref }}
+      
+          # Create the pull request
+          PR_URL=$(gh pr create \
+            --head "$PR_BRANCH" \
+            --base main \
+            --title "Merge External PR: Merge $PR_BRANCH into main" \
+            --body "This PR was automatically created by GitHub Actions to merge changes from $PR_BRANCH into main.")
+
+          gh pr merge "$PR_URL" --rebase --admin --delete-branch

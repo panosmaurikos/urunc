@@ -44,17 +44,20 @@ jobs:
           app-id: ${{ vars.URUNC_BOT_APP_ID }}
           private-key: ${{ secrets.URUNC_BOT_PRIVATE_KEY }}
 
-      - name: Trigger required tests re-run
+      - name: Set up Git
         run: |
-          curl -X DELETE \
-              -H "Accept: application/vnd.github.v3+json" \
-              -H "Authorization: Bearer ${{ steps.generate-token.outputs.token }}" \
-              "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels/ok-to-test"
-          sleep 5
-          curl -X POST \
-              -H "Accept: application/vnd.github.v3+json" \
-              -H "Authorization: Bearer ${{ steps.generate-token.outputs.token }}" \
-              "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels" \
-              -d '{
-                  "labels": ["ok-to-test"]
-              }'        
+          git config --global user.name "urunc-bot[bot]"
+          git config --global user.email "urunc-bot[bot]@users.noreply.github.com"
+
+      - name: Append git trailers
+        uses: nubificus/git-trailers@feat_auto_merge
+        with:
+          user_info: .github/contributors.yaml
+
+      - name: Merge PR
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          PR_URL=${{ github.event.pull_request.html_url }}
+      
+          gh pr merge "$PR_URL" --rebase --admin

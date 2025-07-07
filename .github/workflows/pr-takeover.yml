@@ -1,0 +1,56 @@
+name: PR Takeover on Label
+
+on:
+  pull_request_target:
+    types:
+      - labeled
+
+jobs:
+  pr-takeover:
+    if: github.event.label.name == 'takeover'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Git
+        run: |
+          git config --global user.name "urunc-bot[bot]"
+          git config --global user.email "urunc-bot[bot]@users.noreply.github.com"
+
+      - name: Extract PR info
+        id: prinfo
+        run: |
+          echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+          echo "PR_HEAD_REPO=${{ github.event.pull_request.head.repo.full_name }}" >> $GITHUB_OUTPUT
+          echo "PR_HEAD_REF=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
+
+      - name: Create new local branch for takeover
+        run: |
+          git fetch origin main
+          git checkout -b main-pr${{ steps.prinfo.outputs.PR_NUMBER }} origin/main
+
+      - name: Generate urunc-bot token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.URUNC_BOT_APP_ID }}
+          private-key: ${{ secrets.URUNC_BOT_PRIVATE_KEY }}
+
+      - name: Push new branch to origin
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          git push origin main-pr${{ steps.prinfo.outputs.PR_NUMBER }}
+
+      - name: Change PR base via GitHub API
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          gh pr edit ${{ steps.prinfo.outputs.PR_NUMBER }} --base main-pr${{ steps.prinfo.outputs.PR_NUMBER }}
