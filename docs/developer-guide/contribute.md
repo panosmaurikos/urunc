@@ -100,14 +100,22 @@ Before creating a new PR, please follow the guidelines below:
 - Provide meaningful commit messages, describing shortly the changes.
 - Provide a meaningful PR message
 
-As soon as a new PR is created the following workflow will take place:
+A new (draft) PR triggers the following process:
 
-  1. The creator of the PR should invoke the tests by adding the `ok-to-test` label.
-  2. If the tests pass, request from one or more `urunc`'s [maintainers](https://github.com/urunc-dev/urunc/blob/main/MAINTAINERS) to review the PR.
-  3. The reviewers submit their review.
-  4. The author of the PR should address all the comments from the reviewers.
-  5. As soon as a reviewer approves the PR, an action will add the appropriate git trailers in the PR's commits.
-  6. The reviewer who accepted the changes will merge the new changes.
+  1. A maintainer will check the PR and apply the `ok-to-test` label. This will
+     trigger our CI to make sure the PR changes do not break existing
+     functionality.
+  2. The PR owner makes sure the CI tests pass, and marks the PR as ready to review.
+  3. The reviewers submit their comments & reviews (if any).
+  4. The PR owner should address comments (if any).
+  5. If the PR is external (forked repo), a maintainer adds the `takeover`
+     label, that triggers the change of the base branch to `main-pr<PRID>`. If
+     the PR is internal (local branch) there is no need for the `takeover` label.
+  6. As soon as a reviewer approves the PR, an action will be triggered to add
+     the appropriate trailers in the PR's commits and merge the PR with the
+     main branch. If the PR is external, the maintainer should rebase & merge for
+     the action to be triggered. If the PR is internal, the action will be triggered
+     automatically.
 
 ## Labels for the CI
 
@@ -137,6 +145,9 @@ three labels which can be used:
   PRs, when we want to just test the functionality of the code (either a bug
   fix, or a new feature) and defer the cleanup/polishing of commits, code, and
   docs to when the PR will be ready for review.
+- `takeover`: Changes the base branch for the PR from `main` to `main-pr<PRID>`.
+  This is to facilitate adding git trailers on the commit messages, to mention
+  `Reviewers` and link to the original github PR for reference.
 
 **Note**: Both `skip-build` and `skip-lint` assume that the `ok-to-test` label
 is added.
