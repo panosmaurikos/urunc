@@ -1,0 +1,11 @@
+{
+  "name": "linters",
+  "private": true,
+  "devDependencies": {
+    "@commitlint/config-conventional": "^18.0.0",
+    "@somehow-digital/commitlint-plugin-spellcheck": "^1.1.0",
+    "commitlint": "^18.0.0",
+    "cspell": "^8.19.4"
+  }
+}
+

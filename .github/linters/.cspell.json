@@ -1,0 +1,54 @@
+{
+  "version": "0.2",
+  "dictionaryDefinitions": [ 
+   { 
+    "name": "project-dict", 
+    "path": "urunc-dict.txt" 
+   }
+  ],
+  "dictionaries": ["project-dict"],
+  "words": [ ], 
+  "ignorePaths": [
+    "node_modules",
+    "vendor",
+    "dist",
+    "build",
+    "out",
+    "coverage",
+    "**/*.lock",
+    "**/*.pb.go",
+    "**/*.pb.cc",
+    "**/*.pb.h",
+    "**/*.min.js",
+    "**/*.svg",
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.gif",
+    "**/*.woff",
+    "**/*.woff2",
+    "**/*.ttf",
+    "**/*.eot",
+    "**/third_party/**",
+    "**/go.mod",
+    "**/go.sum"
+  ],
+  "files": [
+    "**/**/*",
+    "**/*",
+    "*.{go,py,sh,makefile,md,yaml,yml,json}"
+  ],
+  "ignoreRegExpList": [
+    "http[s]?://\\S+",
+    "`[^`]+`",
+    "\\$[^\\s]+",
+    "/^Signed-off-by:.*$/gm",
+    "/^Reviewed-by:.*$/gm",
+    "/^Approved-by:.*$/gm",
+    "/^Co-authored-by:.*$/gm",
+    "/^Tested-by:.*$/gm",
+    "/^Acked-by:.*$/gm",
+    "`[^`]+`",
+    "```[\\s\\S]*?```"
+  ]
+}

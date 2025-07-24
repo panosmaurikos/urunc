@@ -19,17 +19,25 @@ jobs:
             runner: ubuntu-22.04
       fail-fast: false
     continue-on-error: true
+    defaults:
+      run:
+        working-directory: .github/linters
+
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          node-version: '22'
+
+      - run: npm install --legacy-peer-deps
 
       - name: Run commitlint
-        uses: wagoid/commitlint-github-action@v6
-        with:
-          configFile: .github/linters/commitlint.config.mjs
+        run: |
+          git fetch origin main --depth=1
+          npx commitlint --from=origin/main --config ./commitlint.config.js
 
   linter-typos:
     name: Spell Check Repo
@@ -45,13 +53,18 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+  
+      - name: Setup Node.js (for cspell)
+        uses: actions/setup-node@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Spell check
-        uses: crate-ci/typos@master
-        with:
-          config: .github/linters/typos.toml
+          node-version: '20'
+  
+      - name: Install cspell
+        run: npm install -g cspell
+  
+      - name: Spell check repo
+        run: cspell --config .github/linters/.cspell.json
+  
 
   linter-license-eye:
     name: Check License Headers
@@ -67,8 +80,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Fix paths
         run: |
