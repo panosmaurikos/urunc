@@ -47,7 +47,7 @@ type testTool interface {
 	inspectPAndGet(string) (string, error)
 }
 
-var errToolDoesNotSupport = errors.New("Operarion not support")
+var errToolDoesNotSupport = errors.New("Operation not support")
 
 func commonNewContainerCmd(a containerTestArgs) string {
 	cmdBase := "--runtime io.containerd.urunc.v2 "

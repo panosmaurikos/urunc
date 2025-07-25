@@ -230,7 +230,7 @@ seccomp filter allowing only seven system calls. The unikernel running on top of
 interacts with this monitor through a similar interface with
 [Solo5-hvt](https://github.com/Solo5/solo5), facilitating network and block
 storage I/O. [Solo5-spt](https://github.com/Solo5/solo5) can provide extremely
-fast intantiation times, very small overhead, along with performant execution.
+fast instantiation times, very small overhead, along with performant execution.
 
 #### Installing Solo5-spt
 

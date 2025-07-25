@@ -28,7 +28,6 @@ import (
 
 var ErrMountpoint = errors.New("no FS is mounted in this mountpoint")
 
-// Inject typo just to verfiy
 // RootFs contains information regarding a mount
 type RootFs struct {
 	Path   string // The path of the root file system.

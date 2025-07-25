@@ -14,7 +14,7 @@ For the above purpose `urunc` acts as any other OCI runtime. The main
 difference of `urunc` with other container runtimes is that instead of
 spawning a simple process, it uses a Virtual Machine Monitor (VMM) or a sandbox
 monitor to run the unikernel. It is important to note that `urunc` does not
-require any particular software running alongise the user's application inside
+require any particular software running alongside the user's application inside
 or outside the unikernel. As a result, `urunc` is able to support any unikernel
 framework or similar technologies, while maintaining as low overhead as
 possible.
@@ -31,7 +31,7 @@ possible.
 
 Unikernels are well known as a good fit for a variety of use cases, such as:
 
-- Microservices: The lightweight and almost deminished *OS noise* of unikernels
+- Microservices: The lightweight and almost diminished *OS noise* of unikernels
   can significantly improve the execution of applications, making unikernels an
   attractive fit for microservices.
 - Serverless and FaaS: The extremely fast instantiation time of unikernels

@@ -31,7 +31,7 @@ address delivers your message securely to all maintainers.
 
 ### Vulnerability handling process
 
-Upon the receival of a vulnerability report, the following process will take place:
+Upon the receipt of a vulnerability report, the following process will take place:
 
 - the `urunc` maintainers will acknowledge and analyze the report within 48
   hours

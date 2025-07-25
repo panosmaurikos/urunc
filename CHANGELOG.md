@@ -154,7 +154,7 @@
 - ([1ae5d5b](https://github.com/nubificus/urunc/commit/1ae5d5ba514a061bf14dbf01035a986b5cfb26e4)) Update installation instructions, add linting instructions (@gntouts)
 
 - ([89fa71c](https://github.com/nubificus/urunc/commit/89fa71cc35f0bb3ce019e4c7b861dd43f49ead6b)) Add tests, update workflow triggers (@gntouts)
-    - Add end to end tests for hvt hypervisor and rumprun unikernels using ctr, nerdct, crictl.
+    - Add end to end tests for hvt hypervisor and rumprun unikernels using ctr, nerdctl, crictl.
 
 - ([9271e4f](https://github.com/nubificus/urunc/commit/9271e4f2dd667c4c23b716ec10010ec6d7759671)) Refactor urunc to enhance code organization and maintainability (@gntouts)
 

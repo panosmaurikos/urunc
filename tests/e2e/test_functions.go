@@ -75,18 +75,18 @@ func userGroupTest(tool testTool) error {
 	groups := strings.Split(strings.TrimSpace(groupString[1]), " ")
 
 	if uid != args.UID {
-		return fmt.Errorf("Mismmatch in uid. Got: %d should be %d", uid, args.UID)
+		return fmt.Errorf("Mismatch in uid. Got: %d should be %d", uid, args.UID)
 	}
 
 	if gid != args.GID {
-		return fmt.Errorf("Mismmatch in gid. Got: %d should be %d", gid, args.GID)
+		return fmt.Errorf("Mismatch in gid. Got: %d should be %d", gid, args.GID)
 	}
 
 	lenag := len(args.Groups)
 	if lenag > 0 {
 		lenpg := len(groups)
 		if lenpg != (lenag + 1) {
-			return fmt.Errorf("Mismmatch in groups length. Got: %d should be %d",
+			return fmt.Errorf("Mismatch in groups length. Got: %d should be %d",
 				lenpg, lenag+1)
 		}
 		for _, groupid := range args.Groups {
@@ -130,7 +130,7 @@ func seccompTest(tool testTool) error {
 
 func namespaceTest(tool testTool) error {
 	// We need to retrieve the container's config, in order to get
-	// the neamspaces that the container should have joined.
+	// the namespaces that the container should have joined.
 	containerID := tool.getContainerID()
 	// Try /run/containerd/io.containerd.runtime.v2.task/default/containerID first
 	configPath := filepath.Join("/var/run/containerd/io.containerd.runtime.v2.task/default/", containerID, "/config.json")
@@ -268,7 +268,7 @@ func httpStaticNetTest(tool testTool) (err error) {
 	defer func() {
 		tempErr := netns.Set(origns)
 		if tempErr != nil {
-			err = fmt.Errorf("Failed to revert to default network nampespace: %v", err)
+			err = fmt.Errorf("Failed to revert to default network namespace: %v", err)
 		}
 	}()
 	ifaces, err := net.Interfaces()

@@ -168,7 +168,7 @@ func createUnikontainer(context *cli.Context) (err error) {
 	// TODO: This part of code needs better rhandling. It is not the
 	// job of the urunc create to setup the terminal for reexec.
 	// The main concern is the nsenter execution before the reexec.
-	// If anythong goes wrong and we mess up with nsenter debugging
+	// If anything goes wrong and we mess up with nsenter debugging
 	// is extremely hard.
 	if unikontainer.Spec.Process.Terminal {
 		ptm, err := pty.Start(reexecCommand)

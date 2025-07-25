@@ -104,7 +104,7 @@ INSTALL_DEPS   += $(shell test -e $(SHIM_BIN)_static_$(ARCH) \
 
 # Main Building rules
 #
-# By default we opt to build static binaries targeting the host archiotecture.
+# By default we opt to build static binaries targeting the host architecture.
 # However, we build shim as a dynamically-linked binary.
 
 ## default Build shim and urunc statically for host arch.(default).
@@ -143,8 +143,8 @@ dynamic: $(URUNC_BIN)_dynamic_$(ARCH) $(SHIM_BIN)_dynamic_$(ARCH)
 .PHONY: all
 all: $(SHIM_BIN)_static_arm64 $(SHIM_BIN)_static_amd64 $(URUNC_BIN)_static_amd64 $(URUNC_BIN)_static_arm64
 
-# Just an alias for $(VENDOR_DIR) for easie invocation
-## prepare Run go mod vendor and veridy.
+# Just an alias for $(VENDOR_DIR) for easy invocation
+## prepare Run go mod tidy, vendor, and verify.
 prepare: $(VENDOR_DIR)
 
 # Add tidy as order-only prerequisite. In that way, since tidy does not
@@ -156,7 +156,7 @@ $(VENDOR_DIR):
 	$(GO) mod verify
 
 # Add tidy and as order-only prerequisite. In that way, since tidy and
-# vendor do notproduce any file and execute all the time,
+# vendor do not produce any file and execute all the time,
 # we avoid the rebuilding of urunc if it has previously built and the
 # source files have not changed.
 $(URUNC_BIN)_static_%: $(URUNC_SRC) | prepare

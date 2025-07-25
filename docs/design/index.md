@@ -20,7 +20,7 @@ In the unikernel context a single-process application runs directly on top of a
 Virtual Machine (VM) or a sandbox. At the same time, in the VM context, every
 VM runs as a process. Subsequently, `urunc` combines these two characteristics
 and treats the VM's process, which executes the unikernel that runs the
-application, as the container's process. This way, `urunc` does not reuire any
+application, as the container's process. This way, `urunc` does not require any
 auxiliary process running alongside the unikernel, maintaining as less overhead
 as possible. Instead `urunc` directly manages the application running in the
 unikernel through the VMM or the sandbox monitor. Moreover, `urunc` does not
@@ -61,7 +61,7 @@ or the unikernel and the aforementioned metadata which dictate how the unikernel
 should be run. The metadata can be passed to `urunc` either in the form of
 [annotations](https://github.com/opencontainers/runtime-spec/blob/main/config.md#annotations)
 or as a specific file in the container's rootfs. For a detailed explanation and
-an up-to-date list of the currently supported annotations take alook at the
+an up-to-date list of the currently supported annotations take a look at the
 [packaging unikernels page](../package/#annotations).
 
 Although `urunc`-formatted unikernel images are not designed to be executed by

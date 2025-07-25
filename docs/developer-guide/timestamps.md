@@ -92,7 +92,7 @@ $ cat /tmp/urunc.zlog | grep TS
 
 > Note: the timestamp destination (`/tmp/urunc.zlog`) is hardcoded for the time being.
 
-## Gethering the timestamps
+## Gathering the timestamps
 
 There are 3 Python utilities inside the `script/performance` directory to help gather the timestamps.
 

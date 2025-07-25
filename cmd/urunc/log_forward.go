@@ -26,7 +26,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Spelcheck isues triger
 var msgRegex = regexp.MustCompile(`^([\w\-]+\[\d+\]): (.+)$`)
 
 type StructuredJSONFormatter struct{}
