@@ -55,17 +55,23 @@ However, this is not always reliable:
 - CLI argument handling may be incorrect: Linux does not natively support
   multi-word arguments via kernel boot parameters. Each space-separated word is
   treated as a separate argument.
+- A few necessary operations (such as mount /proc, set default route) might be
+  required before executing the application.
 
-To tackle this, `urunc` follows a simple convention. All multi-word CLI arguments
-are wrapped in single quotes and the init process (or application) is expected
-to reconstruct them properly.
+Especially, for CLI argument handing, `urunc` follows a simple convention. All
+multi-word CLI arguments are wrapped in single quotes and the init process (or
+application) is expected to reconstruct them properly.
 
-For these reasons, we recommend introducing a dedicated init process. We provide
-[urunit](https://github.com/nubificus/urunit#); a lightweight init designed
-specifically for `urunc`. It performs two key roles:
+For all the above reasons, we recommend using a dedicated init process. We
+provide [urunit](https://github.com/nubificus/urunit#); a lightweight init
+designed specifically for `urunc`. It performs the following actions:
 
-1. Groups multi-word arguments correctly.
-2. Acts as a reaper, cleaning up zombie processes.
+1. Sets default route through eth0. This is necessary when we deploy
+   the container in a Kubernetes cluster, where there is a high chance that
+   the gateway of the container might be in a different subnet than the IP.
+   As a result, Linux kernel will fail to set the gateway.
+2. Groups multi-word arguments correctly.
+3. Acts as a reaper, cleaning up zombie processes.
 
 You can obtain [urunit](https://github.com/nubificus/urunit) in two ways:
 

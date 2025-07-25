@@ -117,7 +117,6 @@ func (r *Rumprun) CommandString() (string, error) {
 		finalJSONString += "," + blkJSONString
 	}
 	finalJSONString += "}"
-	fmt.Println(finalJSONString)
 	return finalJSONString, nil
 }
 
