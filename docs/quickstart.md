@@ -60,7 +60,7 @@ sudo apt install -y qemu-system
 Now we are ready to run Nginx as a Unikraft unikernel using [docker](https://docs.docker.com/engine/install/ubuntu/) and `urunc`:
 
 ```console
-$ docker run --rm -d --runtime io.containerd.urunc.v2 harbor.nbfc.io/nubificus/urunc/nginx-qemu-unikraft:latest unikernel
+$ docker run --rm -d --runtime io.containerd.urunc.v2 harbor.nbfc.io/nubificus/urunc/nginx-qemu-unikraft:latest
 67bec5ab9a748e35faf7c2079002177b9bdc806220e59b6b413836db1d6e4018
 ```
 
@@ -251,7 +251,7 @@ sudo cp tenders/hvt/solo5-hvt /usr/local/bin
 Now, let's run a Redis unikernel on top of Rumprun and solo5-hvt:
 
 ```bash
-sudo nerdctl run -d --snapshotter devmapper --runtime io.containerd.urunc.v2 harbor.nbfc.io/nubificus/urunc/redis-hvt-rumprun:latest unikernel
+sudo nerdctl run -d --snapshotter devmapper --runtime io.containerd.urunc.v2 harbor.nbfc.io/nubificus/urunc/redis-hvt-rumprun-raw:latest
 ```
 
 We can inspect the running container to check it's IP address:
@@ -259,7 +259,7 @@ We can inspect the running container to check it's IP address:
 ```console
 $ sudo nerdctl ps 
 CONTAINER ID    IMAGE                                                      COMMAND        CREATED           STATUS    PORTS    NAMES
-8a415b278a9e    harbor.nbfc.io/nubificus/urunc/redis-hvt-rumprun:latest    "unikernel"    18 seconds ago    Up                 redis-hvt-rumprun-8a415
+8a415b278a9e    harbor.nbfc.io/nubificus/urunc/redis-hvt-rumprun-raw:latest    "redis-server /data/…"    18 seconds ago    Up                 redis-hvt-rumprun-8a415
 $ sudo nerdctl inspect 8a415b278a9e | grep IPAddress
             "IPAddress": "10.4.0.2",
                     "IPAddress": "10.4.0.2",

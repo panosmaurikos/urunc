@@ -68,7 +68,7 @@ Supported unikernel frameworks with `urunc`:
 An example unikernel:
 
 ```bash
-sudo nerdctl run --rm -ti --runtime io.containerd.urunc.v2 harbor.nbfc.io/nubificus/urunc/nginx-qemu-unikraft-initrd:latest unikernel
+sudo nerdctl run --rm -ti --runtime io.containerd.urunc.v2 harbor.nbfc.io/nubificus/urunc/nginx-qemu-unikraft-initrd:latest
 ```
 
 ### AWS Firecracker
@@ -136,7 +136,7 @@ Supported unikernel frameworks with `urunc`:
 An example unikernel:
 
 ```bash
-sudo nerdctl run --rm -ti --runtime io.containerd.urunc.v2 harbor.nbfc.io/nubificus/urunc/nginx-firecracker-unikraft-initrd:latest unikernel
+sudo nerdctl run --rm -ti --runtime io.containerd.urunc.v2 harbor.nbfc.io/nubificus/urunc/nginx-firecracker-unikraft-initrd:latest
 ```
 
 ### Solo5-hvt
@@ -202,7 +202,7 @@ Supported unikernel frameworks with `urunc`:
 An example unikernel with a block image inside the conntainer's rootfs:
 
 ```bash
-sudo nerdctl run --rm -ti --runtime io.containerd.urunc.v2 harbor.nbfc.io/nubificus/urunc/redis-hvt-rumprun-block:latest unikernel
+sudo nerdctl run --rm -ti --runtime io.containerd.urunc.v2 harbor.nbfc.io/nubificus/urunc/redis-hvt-rumprun-block:latest
 ```
 
 ## Software-based isolation monitors
@@ -273,5 +273,5 @@ Supported unikernel frameworks with `urunc`:
 An example unikernel which utilizes devmapper for block storage:
 
 ```bash
-sudo nerdctl run --rm -ti --snapshotter devmapper --runtime io.containerd.urunc.v2 harbor.nbfc.io/nubificus/urunc/redis-spt-rumprun:latest unikernel
+sudo nerdctl run --rm -ti --snapshotter devmapper --runtime io.containerd.urunc.v2 harbor.nbfc.io/nubificus/urunc/redis-spt-rumprun-raw:latest
 ```
