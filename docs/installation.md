@@ -217,8 +217,8 @@ wget -q https://go.dev/dl/go${GO_VERSION}.linux-$(dpkg --print-architecture).tar
 sudo mkdir /usr/local/go${GO_VERSION}
 sudo tar -C /usr/local/go${GO_VERSION} -xzf go${GO_VERSION}.linux-$(dpkg --print-architecture).tar.gz
 sudo tee -a /etc/profile > /dev/null << EOT
-port PATH=\$PATH:/usr/local/go$GO_VERSION/go/bin
-T
+export PATH=\$PATH:/usr/local/go$GO_VERSION/go/bin
+EOT
 rm -f go${GO_VERSION}.linux-$(dpkg --print-architecture).tar.gz
 ```
 
