@@ -70,27 +70,35 @@ jobs:
           tags: |
             type=sha,prefix=${{ env.ARCH }}-
 
-      - name: Get revision SHA and branch
+      - name: Get revision SHA and branch (safe)
         id: get-rev
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          IS_MERGED: ${{ github.event.pull_request.merged }}
+          GITHUB_SHA: ${{ github.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            if [ "${{ github.event.pull_request.merged }}" == true ]; then
-              sha="${{ github.sha }}"
-              branch="${{ github.base_ref }}"
+          if [ "$EVENT_NAME" == "pull_request" ]; then
+            if [ "$IS_MERGED" == "true" ]; then
+              sha="$GITHUB_SHA"
+              branch="$PR_BASE_REF"
               echo "PR merged. SHA: ${sha}, Branch: ${branch}"
             else
-              sha="${{ github.event.pull_request.head.sha }}"
-              branch="${{ github.event.pull_request.head.ref }}"
+              sha="$PR_HEAD_SHA"
+              branch="$PR_HEAD_REF"
               echo "PR not yet merged. SHA: ${sha}, Branch: ${branch}"
             fi
           else
-            sha="${{ github.sha }}"
-            branch="${{ github.ref_name }}"
-            echo "${{ github.event_name }} event. SHA: ${sha}, Branch: ${branch}"
+            sha="$GITHUB_SHA"
+            branch="$REF_NAME"
+            echo "$EVENT_NAME event. SHA: ${sha}, Branch: ${branch}"
           fi
+
           echo "sha=${sha}" >> "$GITHUB_OUTPUT"
           echo "branch=${branch}" >> "$GITHUB_OUTPUT"
-        shell: bash
  
       - name: Build and push urunc-deploy-${{ matrix.arch}}
         id: build-and-push

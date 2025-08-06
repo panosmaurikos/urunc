@@ -56,26 +56,18 @@ jobs:
             runner: ubuntu-22.04-arm
          
     steps:
-    - uses: actions/checkout@v4
+    - name: Harden the runner (Audit all outbound calls)
+      uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
       with:
-        ref: ${{ github.event.pull_request.head.sha }}
+        egress-policy: audit
+
+    - uses: actions/checkout@v4
+
     - uses: actions/setup-go@v5
       with:
         go-version: '1.24.1'
         cache: false
 
-    - name: Set ref and repo from PR or dispatch
-      id: set-ref
-      run: |
-        if [[ "${{ github.event_name }}" == "pull_request" || "${{ github.event_name }}" == "pull_request_target" ]]; then
-          echo "ref=${{ github.event.pull_request.head.ref }}" >> "$GITHUB_OUTPUT"
-          echo "repo=${{ github.event.pull_request.head.repo.full_name }}" >> "$GITHUB_OUTPUT"
-          echo "vmnamestr=pr${{ github.event.pull_request.number }}" >> "$GITHUB_ENV"
-        else
-          echo "ref=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
-          echo "repo=${{ github.repository }}" >> "$GITHUB_OUTPUT"
-          echo "vmnamestr=manual" >> "$GITHUB_ENV"
-        fi
     - name: Install base dependencies
       run: |
         sudo apt-get update
@@ -169,7 +161,7 @@ jobs:
       run: |
         git clone -b ${{ inputs.solo5_version }} https://github.com/Solo5/solo5.git
         cd solo5
-        ./configure.sh  && make -j$(nproc)
+        ./configure.sh && make -j$(nproc)
         sudo cp tenders/hvt/solo5-hvt /usr/local/bin
         sudo cp tenders/spt/solo5-spt /usr/local/bin
 

@@ -26,9 +26,9 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
 
@@ -52,10 +52,10 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
   
       - name: Setup Node.js (for cspell)
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '20'
   
@@ -79,7 +79,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Fix paths
         run: |
@@ -93,7 +93,7 @@ jobs:
         shell: bash
 
       - name: Run license-eye
-        uses: apache/skywalking-eyes/header@main
+        uses: apache/skywalking-eyes/header@07a607ff5b0759f5ed47306c865aac50fe9b3985 # main
         with:
           config: .github/linters/licenserc.yml
           token: ${{ secrets.GITHUB_TOKEN }}

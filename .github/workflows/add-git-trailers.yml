@@ -27,19 +27,19 @@ jobs:
         run: exit 1
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Append git trailers
-        uses: nubificus/git-trailers@feat_use_rebase
+        uses: nubificus/git-trailers@8e08c91bb4c1fd9cb1ccbd9cc8029c31acf8da66 # feat_use_rebase
         with:
           user_info: .github/contributors.yaml
 
       - name: Generate urunc-bot token
         id: generate-token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
         with:
           app-id: ${{ vars.URUNC_BOT_APP_ID }}
           private-key: ${{ secrets.URUNC_BOT_PRIVATE_KEY }}
@@ -50,7 +50,7 @@ jobs:
           git config --global user.email "urunc-bot[bot]@users.noreply.github.com"
 
       - name: Append git trailers
-        uses: nubificus/git-trailers@feat_auto_merge
+        uses: nubificus/git-trailers@18fd322f3fbfd505b4de728974a4ac1f32f758a7 # feat_auto_merge
         with:
           user_info: .github/contributors.yaml
 
