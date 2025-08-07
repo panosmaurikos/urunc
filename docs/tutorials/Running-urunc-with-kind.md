@@ -17,48 +17,59 @@ The goal is to:
 3. Set up `containerd` to use `urunc` as a runtime.
 4. Deploy a test NGINX unikernel Pod using the `urunc` runtime.
 
-
 ## Steps
 
 ### Step 1: Enable KVM and Nested Virtualization
-
 Ensure the host supports KVM and nested virtualization.
 
 1. **Check KVM support**:
-   ```bash
-   lsmod | grep kvm
-   ```
-   If you see kvm_intel or kvm_amd, KVM is loaded. If not, install it:
-   ```bash 
-   sudo apt update
-   sudo apt install -y qemu-kvm
-   sudo adduser $USER kvm
-   ```
 
-2. **Enable nested virtualization** (choose based on CPU):
-   - For Intel:
-     ```bash
-     echo "options kvm-intel nested=Y" | sudo tee /etc/modprobe.d/kvm-nested.conf
-     sudo modprobe -r kvm_intel
-     sudo modprobe kvm_intel
-     cat /sys/module/kvm_intel/parameters/nested
-     ```
-     Output should be `Y` or `1`.
-   - For AMD:
-      ```bash
-     echo "options kvm-amd nested=1" | sudo tee /etc/modprobe.d/kvm-nested.conf
-     sudo modprobe -r kvm_amd
-     sudo modprobe kvm_amd
-     cat /sys/module/kvm_amd/parameters/nested
-     ```
-     Output should be `1`.
+    ```bash
+    lsmod | grep kvm
+    ```
+
+    If you see `kvm_intel` or `kvm_amd`, KVM is loaded. If not, install it:
+
+    ```bash
+    sudo apt update
+    sudo apt install -y qemu-kvm
+    sudo adduser $USER kvm
+    ```
+
+2. **Enable nested virtualization**:
+
+    There are some differences on how to enable nested virtualization depending on your CPU:
+
+    - For Intel:
+
+        ```bash
+        echo "options kvm-intel nested=Y" | sudo tee /etc/modprobe.d/kvm-nested.conf
+        sudo modprobe -r kvm_intel
+        sudo modprobe kvm_intel
+        cat /sys/module/kvm_intel/parameters/nested
+        ```
+
+        Output should be `Y` or `1`.
+
+    - For AMD:
+
+        ```bash
+        echo "options kvm-amd nested=1" | sudo tee /etc/modprobe.d/kvm-nested.conf
+        sudo modprobe -r kvm_amd
+        sudo modprobe kvm_amd
+        cat /sys/module/kvm_amd/parameters/nested
+        ```
+
+        Output should be `1`.
 
 3. **Verify KVM**:
-   ```bash
-   sudo apt install -y cpu-checker
-   kvm-ok
-   ```
-   Output should include "KVM acceleration can be used".
+
+    ```bash
+    sudo apt install -y cpu-checker
+    kvm-ok
+    ```
+
+    Output should include "KVM acceleration can be used".
 
 ### Step 2: Create a kind Cluster with KVM Access
 
