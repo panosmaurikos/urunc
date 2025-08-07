@@ -268,7 +268,7 @@ jobs:
                   resources:
                     requests:
                       cpu: 10m
-        
+        EOF
         
     - name: Verify hello-spt-rumprun-block deployment
       if: matrix.arch == 'amd64'
