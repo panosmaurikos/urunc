@@ -15,6 +15,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"io"
 	"log"
@@ -31,7 +32,7 @@ import (
 	m "github.com/urunc-dev/urunc/internal/metrics"
 
 	_ "github.com/opencontainers/runc/libcontainer/nsenter"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v3"
 )
 
 const (
@@ -48,7 +49,7 @@ The root filesystem contains the unikernel and any additional files required to 
 
 To start a new instance of a unikernel:
 
-    # urunc run [ -b bundle ] <unikernel-id>
+	# urunc run [ -b bundle ] <unikernel-id>
 
 Where "<unikernel-id>" is your name for the instance of the unikernel that you
 are starting. The name you provide for the unikernel instance must be unique on
@@ -57,71 +58,6 @@ value for "bundle" is the current directory.`
 )
 
 var version string
-
-// FIXME: We need to find a way to set the output file
-var metrics = m.NewZerologMetrics(constants.TimestampTargetFile)
-
-func main() {
-	root := "/run/urunc"
-	app := cli.NewApp()
-	app.Name = "urunc"
-	app.Usage = usage
-	app.Version = version
-	app.Flags = []cli.Flag{
-		cli.BoolFlag{
-			Name:  "debug",
-			Usage: "enable debug logging",
-		},
-		cli.StringFlag{
-			Name:  "log",
-			Value: "",
-			Usage: "set the log file to write runc logs to (default is '/dev/stderr')",
-		},
-		cli.StringFlag{
-			Name:  "log-format",
-			Value: "text",
-			Usage: "set the log format ('text' (default), or 'json')",
-		},
-		cli.StringFlag{
-			Name:  "root",
-			Value: root,
-			Usage: "root directory for storage of container state (this should be located in tmpfs)",
-		},
-		cli.BoolFlag{
-			Name:  "systemd-cgroup",
-			Usage: "enable systemd cgroup support, expects cgroupsPath to be of form \"slice:prefix:name\" for e.g. \"system.slice:runc:434234\"",
-		},
-		cli.StringFlag{
-			Name:  "rootless",
-			Value: "auto",
-			Usage: "ignore cgroup permission errors ('true', 'false', or 'auto')",
-		},
-	}
-	app.Commands = []cli.Command{
-		createCommand,
-		deleteCommand,
-		killCommand,
-		runCommand,
-		// specCommand,
-		startCommand,
-		// stateCommand,
-	}
-	app.Before = func(context *cli.Context) error {
-		if err := reviseRootDir(context); err != nil {
-			return err
-		}
-		return configLogrus(context)
-	}
-
-	// If the command returns an error, cli takes upon itself to print
-	// the error on cli.ErrWriter and exit.
-	// Use our own writer here to ensure the log gets sent to the right location.
-	cli.ErrWriter = &FatalWriter{cli.ErrWriter}
-
-	if err := app.Run(os.Args); err != nil {
-		fatal(err)
-	}
-}
 
 type FatalWriter struct {
 	cliErrWriter io.Writer
@@ -135,19 +71,87 @@ func (f *FatalWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
+// FIXME: We need to find a way to set the output file
+var metrics = m.NewZerologMetrics(constants.TimestampTargetFile)
+
+func main() {
+	root := "/run/urunc"
+	cmd := &cli.Command{
+		Name:    "urunc",
+		Usage:   usage,
+		Version: version,
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:  "debug",
+				Usage: "enable debug logging",
+			},
+			&cli.StringFlag{
+				Name:  "log",
+				Value: "",
+				Usage: "set the log file to write runc logs to (default is '/dev/stderr')",
+			},
+			&cli.StringFlag{
+				Name:  "log-format",
+				Value: "text",
+				Usage: "set the log format ('text' (default), or 'json')",
+			},
+			&cli.StringFlag{
+				Name:  "root",
+				Value: root,
+				Usage: "root directory for storage of container state (this should be located in tmpfs)",
+			},
+			&cli.BoolFlag{
+				Name:  "systemd-cgroup",
+				Usage: "enable systemd cgroup support, expects cgroupsPath to be of form \"slice:prefix:name\" for e.g. \"system.slice:runc:434234\"",
+			},
+			&cli.StringFlag{
+				Name:  "rootless",
+				Value: "auto",
+				Usage: "ignore cgroup permission errors ('true', 'false', or 'auto')",
+			},
+		},
+		Commands: []*cli.Command{
+			createCommand,
+			deleteCommand,
+			killCommand,
+			runCommand,
+			// specCommand,
+			startCommand,
+			// stateCommand,
+		},
+		Before: func(_ context.Context, cmd *cli.Command) (context.Context, error) {
+			if err := reviseRootDir(cmd); err != nil {
+				return nil, err
+			}
+			if err := configLogrus(cmd); err != nil {
+				return nil, err
+			}
+			return nil, nil
+		},
+	}
+	// If the command returns an error, cli takes upon itself to print
+	// the error on cli.ErrWriter and exit.
+	// Use our own writer here to ensure the log gets sent to the right location.
+	cli.ErrWriter = &FatalWriter{cli.ErrWriter}
+
+	if err := cmd.Run(context.Background(), os.Args); err != nil {
+		fatal(err)
+	}
+}
+
 // reviseRootDir ensures that the --root option argument,
 // if specified, is converted to an absolute and cleaned path,
 // and that this path is sane.
-func reviseRootDir(context *cli.Context) error {
-	if !context.IsSet("root") {
+func reviseRootDir(cmd *cli.Command) error {
+	if !cmd.IsSet("root") {
 		return nil
 	}
-	root, err := filepath.Abs(context.GlobalString("root"))
+	root, err := filepath.Abs(cmd.String("root"))
 	if err != nil {
 		return err
 	}
 	if root == "/" {
-		// This can happen if --root argument is
+		// This can happen if --root argument is.
 		//  - "" (i.e. empty);
 		//  - "." (and the CWD is /);
 		//  - "../../.." (enough to get to /);
@@ -155,11 +159,11 @@ func reviseRootDir(context *cli.Context) error {
 		return errors.New("option --root argument should not be set to /")
 	}
 
-	return context.GlobalSet("root", root)
+	return cmd.Set("root", root)
 }
 
-func configLogrus(context *cli.Context) error {
-	if context.GlobalBool("debug") {
+func configLogrus(cmd *cli.Command) error {
+	if cmd.Bool("debug") {
 		logrus.SetLevel(logrus.DebugLevel)
 		logrus.SetReportCaller(true)
 		// Shorten function and file names reported by the logger, by
@@ -174,7 +178,6 @@ func configLogrus(context *cli.Context) error {
 				return function, fileLine
 			},
 		})
-
 		// If debug is enabled, add a syslog hook for easier debugging
 		hook, err := lSyslog.NewSyslogHook("", "", syslog.LOG_DEBUG, "")
 		if err != nil {
@@ -183,7 +186,7 @@ func configLogrus(context *cli.Context) error {
 		logrus.AddHook(hook)
 	}
 
-	switch f := context.GlobalString("log-format"); f {
+	switch f := cmd.String("log-format"); f {
 	case "":
 		// do nothing
 	case "text":
@@ -194,7 +197,7 @@ func configLogrus(context *cli.Context) error {
 		return errors.New("invalid log-format: " + f)
 	}
 
-	if file := context.GlobalString("log"); file != "" {
+	if file := cmd.String("log"); file != "" {
 		f, err := os.OpenFile(file, os.O_CREATE|os.O_WRONLY|os.O_APPEND|os.O_SYNC, 0o644)
 		if err != nil {
 			return err

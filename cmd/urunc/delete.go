@@ -15,14 +15,15 @@
 package main
 
 import (
+	"context"
 	"os"
 	"runtime"
 
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v3"
 )
 
-var deleteCommand = cli.Command{
+var deleteCommand = &cli.Command{
 	Name:  "delete",
 	Usage: "delete any resources held by the container often used with detached container",
 	ArgsUsage: `<container-id>
@@ -34,27 +35,28 @@ For example, if the container id is "ubuntu01" and runc list currently shows the
 status of "ubuntu01" as "stopped" the following will delete resources held for
 "ubuntu01" removing "ubuntu01" from the runc list of containers:
 
-       # runc delete ubuntu01`,
+	# urunc delete ubuntu01`,
 	Flags: []cli.Flag{
-		cli.BoolFlag{
-			Name:  "force, f",
-			Usage: "Forcibly deletes the container if it is still running (uses SIGKILL)",
+		&cli.BoolFlag{
+			Name:    "force",
+			Aliases: []string{"f"},
+			Usage:   "Forcibly deletes the container if it is still running (uses SIGKILL)",
 		},
 	},
-	Action: func(context *cli.Context) error {
+	Action: func(_ context.Context, cmd *cli.Command) error {
 		runtime.GOMAXPROCS(1)
 		runtime.LockOSThread()
 		logrus.WithField("command", "DELETE").WithField("args", os.Args).Debug("urunc INVOKED")
-		if err := checkArgs(context, 1, exactArgs); err != nil {
+		if err := checkArgs(cmd, 1, exactArgs); err != nil {
 			return err
 		}
 
 		// get Unikontainer data from state.json
-		unikontainer, err := getUnikontainer(context)
+		unikontainer, err := getUnikontainer(cmd)
 		if err != nil {
 			return err
 		}
-		if context.Bool("force") {
+		if cmd.Bool("force") {
 			err := unikontainer.Kill()
 			if err != nil {
 				return err

@@ -19,7 +19,7 @@ require (
 	github.com/rs/zerolog v1.34.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.11.1
-	github.com/urfave/cli v1.22.17
+	github.com/urfave/cli/v3 v3.4.1
 	github.com/vishvananda/netlink v1.3.1
 	github.com/vishvananda/netns v0.0.5
 	golang.org/x/sys v0.36.0
@@ -43,7 +43,6 @@ require (
 	github.com/containerd/ttrpc v1.2.7 // indirect
 	github.com/containerd/typeurl/v2 v2.2.3 // indirect
 	github.com/coreos/go-systemd/v22 v22.6.0 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/docker/go-events v0.0.0-20250808211157-605354379745 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
@@ -64,7 +63,6 @@ require (
 	github.com/opencontainers/selinux v1.12.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/net v0.43.0 // indirect

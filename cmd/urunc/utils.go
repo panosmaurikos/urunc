@@ -15,6 +15,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -22,7 +23,7 @@ import (
 	"syscall"
 
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v3"
 	"github.com/urunc-dev/urunc/pkg/unikontainers"
 	"golang.org/x/sys/unix"
 )
@@ -38,41 +39,41 @@ var ErrEmptyContainerID = errors.New("container ID can not be empty")
 
 // checkArgs checks the number of arguments provided in the command-line context
 // against the expected number, based on the specified checkType.
-func checkArgs(context *cli.Context, expected, checkType int) error {
+func checkArgs(cmd *cli.Command, expected, checkType int) error {
 	var err error
-	cmdName := context.Command.Name
+	cmdName := cmd.Name
 
 	switch checkType {
 	case exactArgs:
-		if context.NArg() != expected {
+		if cmd.NArg() != expected {
 			err = fmt.Errorf("%s: %q requires exactly %d argument(s)", os.Args[0], cmdName, expected)
 		}
 	case minArgs:
-		if context.NArg() < expected {
+		if cmd.NArg() < expected {
 			err = fmt.Errorf("%s: %q requires a minimum of %d argument(s)", os.Args[0], cmdName, expected)
 		}
 	case maxArgs:
-		if context.NArg() > expected {
+		if cmd.NArg() > expected {
 			err = fmt.Errorf("%s: %q requires a maximum of %d argument(s)", os.Args[0], cmdName, expected)
 		}
 	}
 
 	if err != nil {
 		fmt.Printf("Incorrect Usage.\n\n")
-		_ = cli.ShowCommandHelp(context, cmdName)
+		_ = cli.ShowCommandHelp(context.Background(), cmd, cmdName)
 		return err
 	}
 	return nil
 }
 
-func getUnikontainer(context *cli.Context) (*unikontainers.Unikontainer, error) {
-	containerID := context.Args().First()
+func getUnikontainer(cmd *cli.Command) (*unikontainers.Unikontainer, error) {
+	containerID := cmd.Args().First()
 	if containerID == "" {
 		return nil, ErrEmptyContainerID
 	}
 
 	// We have already made sure in main.go that root is not nil
-	rootDir := context.GlobalString("root")
+	rootDir := cmd.String("root")
 
 	// get Unikontainer data from state.json
 	unikontainer, err := unikontainers.Get(containerID, rootDir)
@@ -96,7 +97,7 @@ func runcExec() error {
 		return err
 	}
 	args[0] = binPath
-	return syscall.Exec(args[0], args, os.Environ()) //nolint: gosec
+	return syscall.Exec(binPath, args, os.Environ())
 }
 
 // newSockPair returns a new SOCK_STREAM unix socket pair.

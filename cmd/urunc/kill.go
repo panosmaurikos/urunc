@@ -15,14 +15,15 @@
 package main
 
 import (
+	"context"
 	"os"
 	"runtime"
 
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v3"
 )
 
-var killCommand = cli.Command{
+var killCommand = &cli.Command{
 	Name:  "kill",
 	Usage: "kill sends the specified signal (default: SIGTERM) to the container's init process",
 	ArgsUsage: `<container-id> [signal]
@@ -34,26 +35,27 @@ EXAMPLE:
 For example, if the container id is "ubuntu01" the following will send a "KILL"
 signal to the init process of the "ubuntu01" container:
 
-       # runc kill ubuntu01 KILL`,
+	# urunc kill ubuntu01 KILL`,
 	Flags: []cli.Flag{
-		cli.BoolFlag{
-			Name:  "all, a",
-			Usage: "send the specified signal to all processes inside the container",
+		&cli.BoolFlag{
+			Name:    "all",
+			Aliases: []string{"a"},
+			Usage:   "send the specified signal to all processes inside the container",
 		},
 	},
-	Action: func(context *cli.Context) error {
+	Action: func(_ context.Context, cmd *cli.Command) error {
 		runtime.GOMAXPROCS(1)
 		runtime.LockOSThread()
 		logrus.WithField("command", "KILL").WithField("args", os.Args).Debug("urunc INVOKED")
-		if err := checkArgs(context, 1, minArgs); err != nil {
+		if err := checkArgs(cmd, 1, minArgs); err != nil {
 			return err
 		}
-		if err := checkArgs(context, 2, maxArgs); err != nil {
+		if err := checkArgs(cmd, 2, maxArgs); err != nil {
 			return err
 		}
 
 		// get Unikontainer data from state.json
-		unikontainer, err := getUnikontainer(context)
+		unikontainer, err := getUnikontainer(cmd)
 		if err != nil {
 			return err
 		}

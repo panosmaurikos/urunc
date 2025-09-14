@@ -15,6 +15,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -27,7 +28,7 @@ import (
 
 	"github.com/creack/pty"
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v3"
 	"github.com/urunc-dev/urunc/pkg/unikontainers"
 	"golang.org/x/sys/unix"
 )
@@ -41,42 +42,43 @@ The create command creates an instance of a container for a bundle. The bundle
 is a directory with a specification file named "` + specConfig + `" and a root
 filesystem.`
 
-var createCommand = cli.Command{
+var createCommand = &cli.Command{
 	Name:        "create",
 	Usage:       "create a container",
 	ArgsUsage:   createUsage,
 	Description: createDescription,
 	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:  "bundle, b",
-			Value: "",
-			Usage: `path to the root of the bundle directory, defaults to the current directory`,
+		&cli.StringFlag{
+			Name:    "bundle",
+			Aliases: []string{"b"},
+			Value:   "",
+			Usage:   `path to the root of the bundle directory, defaults to the current directory`,
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "console-socket",
 			Value: "",
 			Usage: "path to an AF_UNIX socket which will receive a file descriptor referencing the master end of the console's pseudoterminal",
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "pid-file",
 			Value: "",
 			Usage: "specify the file to write the process id to",
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name: "reexec",
 		},
 	},
-	Action: func(context *cli.Context) error {
+	Action: func(_ context.Context, cmd *cli.Command) error {
 		logrus.WithField("command", "CREATE").WithField("args", os.Args).Debug("urunc INVOKED")
-		if err := checkArgs(context, 1, exactArgs); err != nil {
+		if err := checkArgs(cmd, 1, exactArgs); err != nil {
 			return err
 		}
 
-		if !context.Bool("reexec") {
-			return createUnikontainer(context)
+		if !cmd.Bool("reexec") {
+			return createUnikontainer(cmd)
 		}
 
-		return reexecUnikontainer(context)
+		return reexecUnikontainer(cmd)
 	},
 }
 
@@ -85,9 +87,9 @@ var createCommand = cli.Command{
 // setups terminal if required and spawns reexec process,
 // waits for reexec process to notify, executes CreateRuntime hooks,
 // sends ACK to reexec process and executes CreateContainer hooks
-func createUnikontainer(context *cli.Context) (err error) {
+func createUnikontainer(cmd *cli.Command) (err error) {
 	err = nil
-	containerID := context.Args().First()
+	containerID := cmd.Args().First()
 	if containerID == "" {
 		err = fmt.Errorf("container id cannot be empty")
 		return err
@@ -95,11 +97,11 @@ func createUnikontainer(context *cli.Context) (err error) {
 	metrics.Capture(containerID, "TS00")
 
 	// We have already made sure in main.go that root is not nil
-	rootDir := context.GlobalString("root")
+	rootDir := cmd.String("root")
 
 	// bundle option cli option is optional. Therefore the bundle directory
 	// is either the CWD or the one defined in the cli option
-	bundlePath := context.String("bundle")
+	bundlePath := cmd.String("bundle")
 	if bundlePath == "" {
 		bundlePath, err = os.Getwd()
 		if err != nil {
@@ -177,7 +179,7 @@ func createUnikontainer(context *cli.Context) (err error) {
 			return err
 		}
 		defer ptm.Close()
-		consoleSocket := context.String("console-socket")
+		consoleSocket := cmd.String("console-socket")
 		conn, err := net.Dial("unix", consoleSocket)
 		if err != nil {
 			err = fmt.Errorf("failed to dial console socker: %w", err)
@@ -350,10 +352,10 @@ func handleNsenterRet(initSock *os.File, reexec *exec.Cmd) (int, error) {
 // waits AckReexec message on urunc.sock,
 // waits StartExecve message on urunc.sock,
 // executes Prestart hooks and finally execve's the unikernel vmm.
-func reexecUnikontainer(context *cli.Context) error {
+func reexecUnikontainer(cmd *cli.Command) error {
 	// No need to check if containerID is valid, because it will get
 	// checked later. We just want it for the metrics
-	containerID := context.Args().First()
+	containerID := cmd.Args().First()
 	metrics.Capture(containerID, "TS04")
 
 	logFd, err := strconv.Atoi(os.Getenv("_LIBCONTAINER_LOGPIPE"))
@@ -376,7 +378,7 @@ func reexecUnikontainer(context *cli.Context) error {
 	}
 
 	// We have already made sure in main.go that root is not nil
-	rootDir := context.GlobalString("root")
+	rootDir := cmd.String("root")
 	baseDir := filepath.Join(rootDir, containerID)
 
 	metrics.Capture(containerID, "TS05")
@@ -395,7 +397,7 @@ func reexecUnikontainer(context *cli.Context) error {
 	// the AckReexec message, however this is not optimal and we might lose
 	// time because urunc create tries to write in a socket that the reexec
 	// process has not created yet.
-	unikontainer, err := getUnikontainer(context)
+	unikontainer, err := getUnikontainer(cmd)
 	if err != nil {
 		return err
 	}

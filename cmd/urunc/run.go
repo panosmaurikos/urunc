@@ -15,11 +15,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v3"
 )
 
 var runUsage = `<container-id>
@@ -37,40 +38,41 @@ to specify command(s) that get run when the container is started. To change the
 command(s) that get executed on start, edit the args parameter of the spec. See
 "runc spec --help" for more explanation.`
 
-var runCommand = cli.Command{
+var runCommand = &cli.Command{
 	Name:        "run",
 	Usage:       "create and run a container",
 	ArgsUsage:   runUsage,
 	Description: runDescription,
 	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:  "bundle, b",
-			Value: "",
-			Usage: `path to the root of the bundle directory, defaults to the current directory`,
+		&cli.StringFlag{
+			Name:    "bundle",
+			Aliases: []string{"b"},
+			Value:   "",
+			Usage:   `path to the root of the bundle directory, defaults to the current directory`,
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "console-socket",
 			Value: "",
 			Usage: "path to an AF_UNIX socket which will receive a file descriptor referencing the master end of the console's pseudoterminal",
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "pid-file",
 			Value: "",
 			Usage: "specify the file to write the process id to",
 		},
 	},
-	Action: func(context *cli.Context) error {
+	Action: func(_ context.Context, cmd *cli.Command) error {
 		logrus.WithField("command", "RUN").WithField("args", os.Args).Debug("urunc INVOKED")
-		if err := checkArgs(context, 1, exactArgs); err != nil {
+		if err := checkArgs(cmd, 1, exactArgs); err != nil {
 			return err
 		}
 
 		// FIXME: This is a refactor of what the previous code did, however I have a feeling
 		// that it will not work...
-		if err := reexecUnikontainer(context); err != nil {
+		if err := reexecUnikontainer(cmd); err != nil {
 			return err
 		}
-		if err := startUnikontainer(context); err != nil {
+		if err := startUnikontainer(cmd); err != nil {
 			return err
 		}
 		return fmt.Errorf("urunc run failed: %w", nil)
