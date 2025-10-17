@@ -43,7 +43,7 @@ on:
         required: false
 
   workflow_dispatch:
-  
+
 permissions:
   contents: read
 
@@ -60,8 +60,38 @@ jobs:
             runner: ubuntu-22.04
           - arch: arm64
             runner: ubuntu-22.04-arm
-         
+
     steps:
+    - name: Validate inputs (prevent command injection)
+      shell: bash
+      env:
+        GO_VERSION: ${{ inputs.go_version }}
+        RUNC_VERSION: ${{ inputs.runc_version }}
+        CONTAINERD_VERSION: ${{ inputs.containerd_version }}
+        CNI_VERSION: ${{ inputs.cni_version }}
+        NERDCTL_VERSION: ${{ inputs.nerdctl_version }}
+        CRICTL_VERSION: ${{ inputs.crictl_version }}
+        FIRECRACKER_VERSION: ${{ inputs.firecracker_version }}
+        SOLO5_VERSION: ${{ inputs.solo5_version }}
+      run: |
+        SAFE_GO_VERSION="$GO_VERSION"
+        SAFE_RUNC_VERSION="$RUNC_VERSION"
+        SAFE_CONTAINERD_VERSION="$CONTAINERD_VERSION"
+        SAFE_CNI_VERSION="$CNI_VERSION"
+        SAFE_NERDCTL_VERSION="$NERDCTL_VERSION"
+        SAFE_CRICTL_VERSION="$CRICTL_VERSION"
+        SAFE_FIRECRACKER_VERSION="$FIRECRACKER_VERSION"
+        SAFE_SOLO5_VERSION="$SOLO5_VERSION"
+
+        for var in SAFE_GO_VERSION SAFE_RUNC_VERSION SAFE_CONTAINERD_VERSION SAFE_CNI_VERSION SAFE_NERDCTL_VERSION SAFE_CRICTL_VERSION SAFE_FIRECRACKER_VERSION SAFE_SOLO5_VERSION; do
+          value="${!var}"
+          if ! [[ "$value" =~ ^v?[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "Invalid format for $var: $value"
+            exit 1
+          fi
+        done
+
+
     - name: Harden the runner (Audit all outbound calls)
       uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
       with:
@@ -83,20 +113,29 @@ jobs:
         sudo mv virtiofsd /usr/libexec/virtiofsd
 
     - name: Install runc
+      env:
+        RUNC_VERSION: ${{ inputs.runc_version }}
       run: |
-        wget -q https://github.com/opencontainers/runc/releases/download/v${{ inputs.runc_version }}/runc.$(dpkg --print-architecture)
+        SAFE_RUNC="${RUNC_VERSION}"
+        wget -q "https://github.com/opencontainers/runc/releases/download/v${SAFE_RUNC}/runc.$(dpkg --print-architecture)"
         sudo install -m 755 runc.$(dpkg --print-architecture) /usr/local/sbin/runc
         rm -f ./runc.$(dpkg --print-architecture)
 
     - name: Install containerd
+      env:
+        CONTAINERD_VERSION: ${{ inputs.containerd_version }}
       run: |
-        wget -q https://github.com/containerd/containerd/releases/download/v${{ inputs.containerd_version }}/containerd-${{ inputs.containerd_version }}-linux-$(dpkg --print-architecture).tar.gz
-        sudo tar Cxzvf /usr/local containerd-${{ inputs.containerd_version }}-linux-$(dpkg --print-architecture).tar.gz
-        rm -f containerd-${{ inputs.containerd_version }}-linux-$(dpkg --print-architecture).tar.gz
+        SAFE_CONTAINERD="${CONTAINERD_VERSION}"
+        wget -q "https://github.com/containerd/containerd/releases/download/v${SAFE_CONTAINERD}/containerd-${SAFE_CONTAINERD}-linux-$(dpkg --print-architecture).tar.gz"
+        sudo tar Cxzvf /usr/local "containerd-${SAFE_CONTAINERD}-linux-$(dpkg --print-architecture).tar.gz"
+        rm -f "containerd-${SAFE_CONTAINERD}-linux-$(dpkg --print-architecture).tar.gz"
 
     - name: Set up containerd service
+      env:
+        CONTAINERD_VERSION: ${{ inputs.containerd_version }}
       run: |
-        wget -q https://raw.githubusercontent.com/containerd/containerd/v${{ inputs.containerd_version }}/containerd.service
+        SAFE_CONTAINERD="$CONTAINERD_VERSION"
+        wget -q "https://raw.githubusercontent.com/containerd/containerd/v${SAFE_CONTAINERD}/containerd.service"
         sudo rm -f /lib/systemd/system/containerd.service
         sudo mv containerd.service /lib/systemd/system/containerd.service
         sudo systemctl daemon-reload
@@ -133,42 +172,55 @@ jobs:
         sudo systemctl restart containerd
 
     - name: Install CNI plugins
+      env:
+        CNI_VERSION: ${{ inputs.cni_version }}
       run: |
-        wget -q https://github.com/containernetworking/plugins/releases/download/v${{ inputs.cni_version }}/cni-plugins-linux-$(dpkg --print-architecture)-v${{ inputs.cni_version }}.tgz
+        SAFE_CNI="${CNI_VERSION}"
+        wget -q "https://github.com/containernetworking/plugins/releases/download/v${SAFE_CNI}/cni-plugins-linux-$(dpkg --print-architecture)-v${SAFE_CNI}.tgz"
         sudo mkdir -p /opt/cni/bin
-        sudo tar Cxzvf /opt/cni/bin cni-plugins-linux-$(dpkg --print-architecture)-v${{ inputs.cni_version }}.tgz
-        rm -f cni-plugins-linux-$(dpkg --print-architecture)-v${{ inputs.cni_version }}.tgz
+        sudo tar Cxzvf /opt/cni/bin "cni-plugins-linux-$(dpkg --print-architecture)-v${SAFE_CNI}.tgz"
+        rm -f "cni-plugins-linux-$(dpkg --print-architecture)-v${SAFE_CNI}.tgz"
 
     - name: Install nerdctl
+      env:
+        NERDCTL_VERSION: ${{ inputs.nerdctl_version }}
       run: |
-        wget -q https://github.com/containerd/nerdctl/releases/download/v${{ inputs.nerdctl_version }}/nerdctl-${{ inputs.nerdctl_version }}-linux-$(dpkg --print-architecture).tar.gz
-        sudo tar Cxzvf /usr/local/bin nerdctl-${{ inputs.nerdctl_version }}-linux-$(dpkg --print-architecture).tar.gz
-        rm -f nerdctl-${{ inputs.nerdctl_version }}-linux-$(dpkg --print-architecture).tar.gz
+        SAFE_NERDCTL="${NERDCTL_VERSION}"
+        wget -q "https://github.com/containerd/nerdctl/releases/download/v${SAFE_NERDCTL}/nerdctl-${SAFE_NERDCTL}-linux-$(dpkg --print-architecture).tar.gz"
+        sudo tar Cxzvf /usr/local/bin "nerdctl-${SAFE_NERDCTL}-linux-$(dpkg --print-architecture).tar.gz"
+        rm -f "nerdctl-${SAFE_NERDCTL}-linux-$(dpkg --print-architecture).tar.gz"
 
     - name: Install crictl
+      env:
+        CRICTL_VERSION: ${{ inputs.crictl_version }}
       run: |
-        wget https://github.com/kubernetes-sigs/cri-tools/releases/download/${{ inputs.crictl_version }}/crictl-${{ inputs.crictl_version }}-linux-${{matrix.arch}}.tar.gz
-        sudo tar zxvf crictl-${{ inputs.crictl_version }}-linux-${{matrix.arch}}.tar.gz -C /usr/local/bin
-        rm -f crictl-${{ inputs.crictl_version }}-linux-${{matrix.arch}}.tar.gz
+        SAFE_CRI="${CRICTL_VERSION}"
+        wget "https://github.com/kubernetes-sigs/cri-tools/releases/download/${SAFE_CRI}/crictl-${SAFE_CRI}-linux-${{ matrix.arch }}.tar.gz"
+        sudo tar zxvf "crictl-${SAFE_CRI}-linux-${{ matrix.arch }}.tar.gz" -C /usr/local/bin
+        rm -f "crictl-${SAFE_CRI}-linux-${{ matrix.arch }}.tar.gz"
         sudo tee -a /etc/crictl.yaml > /dev/null <<'EOT'
         runtime-endpoint: unix:///run/containerd/containerd.sock
         image-endpoint: unix:///run/containerd/containerd.sock
         timeout: 20
         EOT
 
-
     - name: Install Firecracker
+      env:
+        FC_VERSION: ${{ inputs.firecracker_version }}
       run: |
+        SAFE_FC="${FC_VERSION}"
         ARCH="$(uname -m)"
         release_url="https://github.com/firecracker-microvm/firecracker/releases"
-        curl -L ${release_url}/download/${{ inputs.firecracker_version }}/firecracker-${{ inputs.firecracker_version }}-${ARCH}.tgz | tar -xz
-        # Rename the binary to "firecracker"
-        sudo mv release-${{ inputs.firecracker_version }}-${ARCH}/firecracker-${{ inputs.firecracker_version }}-${ARCH} /usr/local/bin/firecracker
-        rm -fr release-${{ inputs.firecracker_version }}-${ARCH}
+        curl -L "${release_url}/download/${SAFE_FC}/firecracker-${SAFE_FC}-${ARCH}.tgz" | tar -xz
+        sudo mv "release-${SAFE_FC}-${ARCH}/firecracker-${SAFE_FC}-${ARCH}" /usr/local/bin/firecracker
+        rm -fr "release-${SAFE_FC}-${ARCH}"
 
     - name: Install solo5
+      env:
+        SOLO5_VERSION: ${{ inputs.solo5_version }}
       run: |
-        git clone -b ${{ inputs.solo5_version }} https://github.com/Solo5/solo5.git
+        SAFE_SOLO5="${SOLO5_VERSION}"
+        git clone -b "${SAFE_SOLO5}" https://github.com/Solo5/solo5.git
         cd solo5
         ./configure.sh && make -j$(nproc)
         sudo cp tenders/hvt/solo5-hvt /usr/local/bin
