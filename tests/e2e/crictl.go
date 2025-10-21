@@ -65,20 +65,15 @@ func crictlNewPodConfig(path string, name string) (string, error) {
 			Attempt:   1,
 		},
 	}
-	// TODO: Find a better way to fix the below issue. However,
-	// since we only use it for testing, it is fine to ignore
-	// it for the time being.
-	//nolint:govet
-	podConfigJSON, err := json.MarshalIndent(podConfig, "", "    ")
+	podConfigJSON, err := json.MarshalIndent(&podConfig, "", "    ")
 	if err != nil {
-		return "", fmt.Errorf("Failed to marshal container config: %v", err)
+		return "", fmt.Errorf("Failed to marshal pod config: %v", err)
 	}
 	absPodConf := filepath.Join(path, podConfigFilename)
 	err = writeToFile(absPodConf, string(podConfigJSON))
 	if err != nil {
 		return "", fmt.Errorf("Failed to write pod config: %v", err)
 	}
-
 	return absPodConf, nil
 }
 
@@ -116,11 +111,7 @@ func crictlNewContainerConfig(path string, a containerTestArgs) (string, error) 
 	if len(a.Groups) != 0 {
 		containerConfig.Linux.SecurityContext.SupplementalGroups = a.Groups
 	}
-	// TODO: Find a better way to fix the below issue. However,
-	// since we only use it for testing, it is fine to ignore
-	// it for the time being.
-	//nolint:govet
-	cc, err := json.MarshalIndent(containerConfig, "", "    ")
+	cc, err := json.MarshalIndent(&containerConfig, "", "    ")
 	if err != nil {
 		return "", fmt.Errorf("Failed to marshal container config: %v", err)
 	}
