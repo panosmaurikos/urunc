@@ -405,5 +405,39 @@ func prepareMonRootfs(monRootfs string, monitorPath string, needsKVM bool, needs
 		}
 	}
 
+	// Mount /dev/pts for PTY support
+	devPtsPath := filepath.Join(monRootfs, "dev", "pts")
+	err = os.MkdirAll(devPtsPath, 0755)
+	if err != nil {
+		return fmt.Errorf("create /dev/pts directory: %w", err)
+	}
+
+	err = unix.Mount("devpts", devPtsPath, "devpts", unix.MS_NOSUID|unix.MS_NOEXEC, "newinstance,ptmxmode=0666,mode=620,gid=5")
+	if err != nil {
+		return fmt.Errorf("mount devpts: %w", err)
+	}
+
+	// Create /dev/ptmx as symlink to /dev/pts/ptmx
+	devPtmxPath := filepath.Join(monRootfs, "dev", "ptmx")
+	err = os.Symlink("pts/ptmx", devPtmxPath)
+	if err != nil && !os.IsExist(err) {
+		return fmt.Errorf("create /dev/ptmx symlink: %w", err)
+	}
+
+	// Create /dev/console 
+	devConsolePath := filepath.Join(monRootfs, "dev", "console")
+	f, err := os.Create(devConsolePath)
+	if err != nil && !os.IsExist(err) {
+		return fmt.Errorf("create /dev/console: %w", err)
+	}
+	if f != nil {
+		err = f.Chmod(0666)
+		if err != nil {
+			f.Close()
+			return fmt.Errorf("chmod /dev/console: %w", err)
+		}
+		f.Close()
+	}
+
 	return nil
 }

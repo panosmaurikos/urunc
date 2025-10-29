@@ -441,6 +441,14 @@ func (u *Unikontainer) Exec(metrics m.Writer) error {
 		return err
 	}
 
+	// Setup console if terminal is requested
+	if u.Spec.Process.Terminal {
+		err = setupConsoleForTerminal()
+		if err != nil {
+			return fmt.Errorf("failed to setup console: %w", err)
+		}
+	}
+
 	// uid/gid
 	// Setup uid, gid and additional groups for the monitor process
 	err = setupUser(u.Spec.Process.User)

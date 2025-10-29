@@ -20,17 +20,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 
-	"github.com/creack/pty"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v3"
 	"github.com/urunc-dev/urunc/pkg/unikontainers"
-	"golang.org/x/sys/unix"
 )
 
 var createUsage = `<container-id>
@@ -159,57 +156,23 @@ func createUnikontainer(cmd *cli.Command, uruncCfg *unikontainers.UruncConfig) (
 	}
 
 	// Setup reexecCommand
-	reexecCommand := createReexecCmd(initSockChild, logPipeChild)
+	consoleSocket := cmd.String("console-socket")
+	reexecCommand := createReexecCmd(initSockChild, logPipeChild, consoleSocket, unikontainer.Spec.Process.Terminal)
 
 	// Create a go func to handle logs from nsenter
 	logsDone := ForwardLogs(logPipeParent)
 
 	// Start reexec process
 	metrics.Capture(containerID, "TS03")
-	// setup terminal if required and start reexec process
-	// TODO: This part of code needs better rhandling. It is not the
-	// job of the urunc create to setup the terminal for reexec.
-	// The main concern is the nsenter execution before the reexec.
-	// If anything goes wrong and we mess up with nsenter debugging
-	// is extremely hard.
-	if unikontainer.Spec.Process.Terminal {
-		ptm, err := pty.Start(reexecCommand)
-		if err != nil {
-			err = fmt.Errorf("failed to setup pty and start reexec process: %w", err)
-			return err
-		}
-		defer ptm.Close()
-		consoleSocket := cmd.String("console-socket")
-		conn, err := net.Dial("unix", consoleSocket)
-		if err != nil {
-			err = fmt.Errorf("failed to dial console socker: %w", err)
-			return err
-		}
-		defer conn.Close()
-
-		uc, ok := conn.(*net.UnixConn)
-		if !ok {
-			err = fmt.Errorf("failed to cast unix socket")
-			return err
-		}
-		defer uc.Close()
-
-		// Send file descriptor over socket.
-		oob := unix.UnixRights(int(ptm.Fd()))
-		_, _, err = uc.WriteMsgUnix([]byte(ptm.Name()), oob, nil)
-		if err != nil {
-			err = fmt.Errorf("failed to send PTY file descriptor over socket: %w", err)
-			return err
-		}
-	} else {
-		reexecCommand.Stdin = os.Stdin
-		reexecCommand.Stdout = os.Stdout
-		reexecCommand.Stderr = os.Stderr
-		err := reexecCommand.Start()
-		if err != nil {
-			err = fmt.Errorf("failed to start reexec process: %w", err)
-			return err
-		}
+	// PTY creation is now handled by the reexec process inside the container
+	// We just start the reexec with standard stdio
+	reexecCommand.Stdin = os.Stdin
+	reexecCommand.Stdout = os.Stdout
+	reexecCommand.Stderr = os.Stderr
+	err = reexecCommand.Start()
+	if err != nil {
+		err = fmt.Errorf("failed to start reexec process: %w", err)
+		return err
 	}
 
 	// Close child ends of sockets and pipes.
@@ -287,7 +250,7 @@ func createUnikontainer(cmd *cli.Command, uruncCfg *unikontainers.UruncConfig) (
 	return err
 }
 
-func createReexecCmd(initSock *os.File, logPipe *os.File) *exec.Cmd {
+func createReexecCmd(initSock *os.File, logPipe *os.File, consoleSocket string, terminal bool) *exec.Cmd {
 	selfPath := "/proc/self/exe"
 	reexecCommand := &exec.Cmd{
 		Path: selfPath,
@@ -313,6 +276,12 @@ func createReexecCmd(initSock *os.File, logPipe *os.File) *exec.Cmd {
 	logLevel := strconv.Itoa(int(logrus.GetLevel()))
 	if logLevel != "" {
 		reexecCommand.Env = append(reexecCommand.Env, "_LIBCONTAINER_LOGLEVEL="+logLevel)
+	}
+
+	// Pass console socket and terminal flag to reexec process
+	if terminal && consoleSocket != "" {
+		reexecCommand.Env = append(reexecCommand.Env, "_URUNC_CONSOLE_SOCKET="+consoleSocket)
+		reexecCommand.Env = append(reexecCommand.Env, "_URUNC_TERMINAL=1")
 	}
 
 	return reexecCommand
