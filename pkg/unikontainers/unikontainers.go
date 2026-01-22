@@ -29,6 +29,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/urunc-dev/urunc/pkg/cgroup"
 	"github.com/urunc-dev/urunc/pkg/network"
 	"github.com/urunc-dev/urunc/pkg/unikontainers/hypervisors"
 	"github.com/urunc-dev/urunc/pkg/unikontainers/initrd"
@@ -55,13 +56,14 @@ var ErrNotExistingNS = errors.New("the namespace does not exist")
 
 // Unikontainer holds the data necessary to create, manage and delete unikernel containers
 type Unikontainer struct {
-	State    *specs.State
-	Spec     *specs.Spec
-	BaseDir  string
-	RootDir  string
-	UruncCfg *UruncConfig
-	Listener *net.UnixListener
-	Conn     *net.UnixConn
+	State     *specs.State
+	Spec      *specs.Spec
+	BaseDir   string
+	RootDir   string
+	UruncCfg  *UruncConfig
+	Listener  *net.UnixListener
+	Conn      *net.UnixConn
+	CgroupMgr *cgroup.Manager
 }
 
 // New parses the bundle and creates a new Unikontainer object
@@ -601,6 +603,14 @@ func (u *Unikontainer) Delete() error {
 
 	if u.isRunning() {
 		return fmt.Errorf("cannot delete running container: %s", u.State.ID)
+	}
+
+	// Delete cgroups
+	if u.CgroupMgr != nil {
+		if err := u.CgroupMgr.Delete(); err != nil {
+			uniklog.WithError(err).Error("Failed to delete cgroups")
+			// Don't fail delete - just log
+		}
 	}
 
 	// get a monitor instance of the running monitor

@@ -34,9 +34,15 @@ type UruncTimestamps struct {
 	Destination string `toml:"destination"` // Used to specify a file for timestamps
 }
 
+type UruncCgroup struct {
+	SandboxCgroupOnly bool   `toml:"sandbox_cgroup_only"`
+	OverheadPath      string `toml:"overhead_path"`
+}
+
 type UruncConfig struct {
 	Log        UruncLog                        `toml:"log"`
 	Timestamps UruncTimestamps                 `toml:"timestamps"`
+	Cgroup     UruncCgroup                     `toml:"cgroup"`
 	Monitors   map[string]types.MonitorConfig  `toml:"monitors"`
 	ExtraBins  map[string]types.ExtraBinConfig `toml:"extra_binaries"`
 }
@@ -78,6 +84,13 @@ func defaultTimestampsConfig() UruncTimestamps {
 	}
 }
 
+func defaultCgroupConfig() UruncCgroup {
+	return UruncCgroup{
+		SandboxCgroupOnly: true,
+		OverheadPath:      "/urunc_overhead",
+	}
+}
+
 func defaultMonitorsConfig() map[string]types.MonitorConfig {
 	return map[string]types.MonitorConfig{
 		"qemu":             {DefaultMemoryMB: 256, DefaultVCPUs: 1},
@@ -98,6 +111,7 @@ func defaultUruncConfig() *UruncConfig {
 	return &UruncConfig{
 		Log:        defaultLogConfig(),
 		Timestamps: defaultTimestampsConfig(),
+		Cgroup:     defaultCgroupConfig(),
 		Monitors:   defaultMonitorsConfig(),
 		ExtraBins:  defaultExtraBinConfig(),
 	}
@@ -120,6 +134,10 @@ func (p *UruncConfig) Map() map[string]string {
 	// them to this map. this map will be used to save the rest of the urunc config to state.json
 	cfgMap := make(map[string]string)
 
+	// Cgroup config
+	cfgMap["urunc_config.cgroup.sandbox_cgroup_only"] = strconv.FormatBool(p.Cgroup.SandboxCgroupOnly)
+	cfgMap["urunc_config.cgroup.overhead_path"] = p.Cgroup.OverheadPath
+
 	for hv, hvCfg := range p.Monitors {
 		prefix := "urunc_config.monitors." + hv + "."
 		cfgMap[prefix+"default_memory_mb"] = strconv.FormatUint(uint64(hvCfg.DefaultMemoryMB), 10)
@@ -140,8 +158,19 @@ func UruncConfigFromMap(cfgMap map[string]string) *UruncConfig {
 	// since log and timestamps are loaded at the start of urunc, we will not be reading
 	// them from this map. this map will be used to parse the rest of the urunc config from state.json
 	cfg := &UruncConfig{
+		Cgroup:    defaultCgroupConfig(),
 		Monitors:  defaultMonitorsConfig(),
 		ExtraBins: defaultExtraBinConfig(),
+	}
+
+	// Parse cgroup config
+	if val, ok := cfgMap["urunc_config.cgroup.sandbox_cgroup_only"]; ok {
+		if boolVal, err := strconv.ParseBool(val); err == nil {
+			cfg.Cgroup.SandboxCgroupOnly = boolVal
+		}
+	}
+	if val, ok := cfgMap["urunc_config.cgroup.overhead_path"]; ok {
+		cfg.Cgroup.OverheadPath = val
 	}
 
 	for key, val := range cfgMap {

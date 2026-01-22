@@ -29,6 +29,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v3"
 	m "github.com/urunc-dev/urunc/internal/metrics"
+	"github.com/urunc-dev/urunc/pkg/cgroup"
 	"github.com/urunc-dev/urunc/pkg/unikontainers"
 	"golang.org/x/sys/unix"
 )
@@ -260,6 +261,16 @@ func createUnikontainer(cmd *cli.Command, uruncCfg *unikontainers.UruncConfig) (
 		return err
 	}
 
+	// Setup cgroups
+	err = setupCgroups(cmd, unikontainer, containerPid)
+	if err != nil {
+		// Clean up on cgroup creation failure
+		if unikontainer.CgroupMgr != nil {
+			_ = unikontainer.CgroupMgr.Delete()
+		}
+		return fmt.Errorf("failed to setup cgroups: %w", err)
+	}
+
 	// execute CreateRuntime hooks
 	err = unikontainer.ExecuteHooks("CreateRuntime")
 	if err != nil {
@@ -277,6 +288,51 @@ func createUnikontainer(cmd *cli.Command, uruncCfg *unikontainers.UruncConfig) (
 	metrics.Capture(m.TS08)
 
 	return err
+}
+
+// setupCgroups creates and configures cgroups for the container
+func setupCgroups(cmd *cli.Command, u *unikontainers.Unikontainer, pid int) error {
+	// Check if cgroups are disabled
+	if u.Spec.Linux == nil || u.Spec.Linux.CgroupsPath == "" {
+		logrus.Debug("Cgroups disabled or no cgroup path specified")
+		return nil
+	}
+
+	// Check if systemd cgroup driver is enabled
+	useSystemd := cmd.Bool("systemd-cgroup")
+
+	// Create cgroup manager config
+	cgroupCfg := cgroup.Config{
+		CgroupPath:        u.Spec.Linux.CgroupsPath,
+		ContainerID:       u.State.ID,
+		Resources:         u.Spec.Linux.Resources,
+		SandboxCgroupOnly: u.UruncCfg.Cgroup.SandboxCgroupOnly,
+		OverheadPath:      u.UruncCfg.Cgroup.OverheadPath,
+		UseSystemd:        useSystemd,
+	}
+
+	// Create cgroup manager
+	cgroupMgr, err := cgroup.NewManager(cgroupCfg)
+	if err != nil {
+		return fmt.Errorf("failed to create cgroup manager: %w", err)
+	}
+
+	// Create cgroups and add reexec process
+	if err := cgroupMgr.Create(context.Background(), u.Spec.Linux.Resources, pid, useSystemd); err != nil {
+		return fmt.Errorf("failed to create cgroups: %w", err)
+	}
+
+	// Store manager in unikontainer
+	u.CgroupMgr = cgroupMgr
+
+	logrus.WithFields(logrus.Fields{
+		"cgroup_path":         u.Spec.Linux.CgroupsPath,
+		"sandbox_cgroup_only": u.UruncCfg.Cgroup.SandboxCgroupOnly,
+		"use_systemd":         useSystemd,
+		"pid":                 pid,
+	}).Info("Cgroups created successfully")
+
+	return nil
 }
 
 func createReexecCmd(initSock *os.File, logPipe *os.File) *exec.Cmd {
