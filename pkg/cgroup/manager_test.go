@@ -27,22 +27,10 @@ func TestNewManager(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "valid config - sandbox only",
+			name: "valid config",
 			cfg: Config{
-				CgroupPath:        "/test/cgroup",
-				ContainerID:       "test123",
-				SandboxCgroupOnly: true,
-				OverheadPath:      "/urunc_overhead",
-			},
-			wantErr: false,
-		},
-		{
-			name: "valid config - split policy",
-			cfg: Config{
-				CgroupPath:        "/test/cgroup",
-				ContainerID:       "test456",
-				SandboxCgroupOnly: false,
-				OverheadPath:      "/urunc_overhead",
+				CgroupPath:  "/test/cgroup",
+				ContainerID: "test123",
 			},
 			wantErr: false,
 		},
@@ -146,64 +134,6 @@ func TestNormalizeCgroupPath(t *testing.T) {
 			if got != tt.want {
 				t.Errorf("normalizeCgroupPath(%q, %q) = %q, want %q",
 					tt.cgroupPath, tt.containerID, got, tt.want)
-			}
-		})
-	}
-}
-
-func TestIsVCPUThread(t *testing.T) {
-	tests := []struct {
-		name       string
-		threadName string
-		want       bool
-	}{
-		{
-			name:       "QEMU vCPU thread with KVM",
-			threadName: "CPU 0/KVM",
-			want:       true,
-		},
-		{
-			name:       "QEMU vCPU thread simple",
-			threadName: "CPU 1/KVM",
-			want:       true,
-		},
-		{
-			name:       "generic vcpu thread",
-			threadName: "vcpu0",
-			want:       true,
-		},
-		{
-			name:       "Firecracker vCPU thread",
-			threadName: "fc_vcpu0",
-			want:       true,
-		},
-		{
-			name:       "Firecracker vCPU thread 2",
-			threadName: "fc_vcpu1",
-			want:       true,
-		},
-		{
-			name:       "I/O thread",
-			threadName: "IO 0",
-			want:       false,
-		},
-		{
-			name:       "main thread",
-			threadName: "qemu-system-x86",
-			want:       false,
-		},
-		{
-			name:       "worker thread",
-			threadName: "worker0",
-			want:       false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := isVCPUThread(tt.threadName)
-			if got != tt.want {
-				t.Errorf("isVCPUThread(%q) = %v, want %v", tt.threadName, got, tt.want)
 			}
 		})
 	}

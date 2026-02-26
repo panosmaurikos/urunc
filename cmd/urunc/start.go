@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v3"
@@ -110,17 +109,6 @@ func startUnikontainer(cmd *cli.Command) error {
 	if err != nil {
 		err = fmt.Errorf("failed to set the state as running for container: %w", err)
 		return err
-	}
-
-	if unikontainer.CgroupMgr != nil && unikontainer.CgroupMgr.UsingSplitPolicy() {
-		vmmPid := unikontainer.State.Pid
-		time.Sleep(200 * time.Millisecond)
-
-		if err := unikontainer.CgroupMgr.MoveVCPUThreads(vmmPid); err != nil {
-			logrus.WithError(err).Warn("Failed to move vCPU threads to sandbox cgroup")
-		} else {
-			logrus.Info("Successfully moved vCPU threads to sandbox cgroup")
-		}
 	}
 
 	return unikontainer.ExecuteHooks("Poststart")

@@ -290,7 +290,9 @@ func createUnikontainer(cmd *cli.Command, uruncCfg *unikontainers.UruncConfig) (
 	return err
 }
 
-// setupCgroups creates and configures cgroups for the container
+// setupCgroups creates and configures cgroups for the container.
+// Following Kata Containers' sandbox_cgroup_only approach:
+// all processes (VMM, vCPU, I/O) run under the container's cgroup.
 func setupCgroups(cmd *cli.Command, u *unikontainers.Unikontainer, pid int) error {
 	// Check if cgroups are disabled
 	if u.Spec.Linux == nil || u.Spec.Linux.CgroupsPath == "" {
@@ -303,12 +305,10 @@ func setupCgroups(cmd *cli.Command, u *unikontainers.Unikontainer, pid int) erro
 
 	// Create cgroup manager config
 	cgroupCfg := cgroup.Config{
-		CgroupPath:        u.Spec.Linux.CgroupsPath,
-		ContainerID:       u.State.ID,
-		Resources:         u.Spec.Linux.Resources,
-		SandboxCgroupOnly: u.UruncCfg.Cgroup.SandboxCgroupOnly,
-		OverheadPath:      u.UruncCfg.Cgroup.OverheadPath,
-		UseSystemd:        useSystemd,
+		CgroupPath:  u.Spec.Linux.CgroupsPath,
+		ContainerID: u.State.ID,
+		Resources:   u.Spec.Linux.Resources,
+		UseSystemd:  useSystemd,
 	}
 
 	// Create cgroup manager
@@ -326,10 +326,9 @@ func setupCgroups(cmd *cli.Command, u *unikontainers.Unikontainer, pid int) erro
 	u.CgroupMgr = cgroupMgr
 
 	logrus.WithFields(logrus.Fields{
-		"cgroup_path":         u.Spec.Linux.CgroupsPath,
-		"sandbox_cgroup_only": u.UruncCfg.Cgroup.SandboxCgroupOnly,
-		"use_systemd":         useSystemd,
-		"pid":                 pid,
+		"cgroup_path": u.Spec.Linux.CgroupsPath,
+		"use_systemd": useSystemd,
+		"pid":         pid,
 	}).Info("Cgroups created successfully")
 
 	return nil

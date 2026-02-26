@@ -423,7 +423,7 @@ func TestUruncConfigMap(t *testing.T) {
 		assert.Equal(t, config.ExtraBins["custom"].Options, cfgMap["urunc_config.extra_binaries.custom.options"])
 	})
 
-	t.Run("empty monitors map produces only cgroup config", func(t *testing.T) {
+	t.Run("empty monitors map produces empty map", func(t *testing.T) {
 		t.Parallel()
 		config := &UruncConfig{
 			Cgroup:   defaultCgroupConfig(),
@@ -433,13 +433,10 @@ func TestUruncConfigMap(t *testing.T) {
 		cfgMap := config.Map()
 
 		assert.NotNil(t, cfgMap)
-		// Only cgroup fields should be present
-		assert.Len(t, cfgMap, 2)
-		assert.Contains(t, cfgMap, "urunc_config.cgroup.sandbox_cgroup_only")
-		assert.Contains(t, cfgMap, "urunc_config.cgroup.overhead_path")
+		assert.Len(t, cfgMap, 0)
 	})
 
-	t.Run("empty extra binaries map produces only cgroup config", func(t *testing.T) {
+	t.Run("empty extra binaries map produces empty map", func(t *testing.T) {
 		t.Parallel()
 		config := &UruncConfig{
 			Cgroup:    defaultCgroupConfig(),
@@ -449,10 +446,7 @@ func TestUruncConfigMap(t *testing.T) {
 		cfgMap := config.Map()
 
 		assert.NotNil(t, cfgMap)
-		// Only cgroup fields should be present
-		assert.Len(t, cfgMap, 2)
-		assert.Contains(t, cfgMap, "urunc_config.cgroup.sandbox_cgroup_only")
-		assert.Contains(t, cfgMap, "urunc_config.cgroup.overhead_path")
+		assert.Len(t, cfgMap, 0)
 	})
 
 	t.Run("vhost true is serialized correctly", func(t *testing.T) {

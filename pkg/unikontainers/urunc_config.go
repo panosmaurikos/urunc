@@ -34,10 +34,10 @@ type UruncTimestamps struct {
 	Destination string `toml:"destination"` // Used to specify a file for timestamps
 }
 
-type UruncCgroup struct {
-	SandboxCgroupOnly bool   `toml:"sandbox_cgroup_only"`
-	OverheadPath      string `toml:"overhead_path"`
-}
+// UruncCgroup is kept for TOML compatibility but has no configurable fields.
+// urunc follows Kata Containers' sandbox_cgroup_only approach: all processes
+// (VMM, vCPU, I/O) run under the container's cgroup with no thread classification.
+type UruncCgroup struct{}
 
 type UruncConfig struct {
 	Log        UruncLog                        `toml:"log"`
@@ -85,10 +85,7 @@ func defaultTimestampsConfig() UruncTimestamps {
 }
 
 func defaultCgroupConfig() UruncCgroup {
-	return UruncCgroup{
-		SandboxCgroupOnly: true,
-		OverheadPath:      "/urunc_overhead",
-	}
+	return UruncCgroup{}
 }
 
 func defaultMonitorsConfig() map[string]types.MonitorConfig {
@@ -134,10 +131,6 @@ func (p *UruncConfig) Map() map[string]string {
 	// them to this map. this map will be used to save the rest of the urunc config to state.json
 	cfgMap := make(map[string]string)
 
-	// Cgroup config
-	cfgMap["urunc_config.cgroup.sandbox_cgroup_only"] = strconv.FormatBool(p.Cgroup.SandboxCgroupOnly)
-	cfgMap["urunc_config.cgroup.overhead_path"] = p.Cgroup.OverheadPath
-
 	for hv, hvCfg := range p.Monitors {
 		prefix := "urunc_config.monitors." + hv + "."
 		cfgMap[prefix+"default_memory_mb"] = strconv.FormatUint(uint64(hvCfg.DefaultMemoryMB), 10)
@@ -161,16 +154,6 @@ func UruncConfigFromMap(cfgMap map[string]string) *UruncConfig {
 		Cgroup:    defaultCgroupConfig(),
 		Monitors:  defaultMonitorsConfig(),
 		ExtraBins: defaultExtraBinConfig(),
-	}
-
-	// Parse cgroup config
-	if val, ok := cfgMap["urunc_config.cgroup.sandbox_cgroup_only"]; ok {
-		if boolVal, err := strconv.ParseBool(val); err == nil {
-			cfg.Cgroup.SandboxCgroupOnly = boolVal
-		}
-	}
-	if val, ok := cfgMap["urunc_config.cgroup.overhead_path"]; ok {
-		cfg.Cgroup.OverheadPath = val
 	}
 
 	for key, val := range cfgMap {

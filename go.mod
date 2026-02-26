@@ -6,12 +6,14 @@ require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/cavaliergopher/cpio v1.0.1
+	github.com/containerd/cgroups/v3 v3.1.0
 	github.com/containerd/containerd v1.7.30
 	github.com/creack/pty v1.1.24
 	github.com/elastic/go-seccomp-bpf v1.6.0
 	github.com/hashicorp/go-version v1.8.0
 	github.com/jackpal/gateway v1.1.1
 	github.com/moby/sys/mount v0.3.4
+	github.com/moby/sys/userns v0.1.0
 	github.com/nubificus/hedge_cli v0.0.3
 	github.com/onsi/ginkgo/v2 v2.28.1
 	github.com/onsi/gomega v1.39.1
@@ -63,7 +65,6 @@ require (
 	github.com/moby/sys/mountinfo v0.7.2 // indirect
 	github.com/moby/sys/sequential v0.6.0 // indirect
 	github.com/moby/sys/user v0.4.0 // indirect
-	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
